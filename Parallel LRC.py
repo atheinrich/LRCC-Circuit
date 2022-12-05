@@ -3,6 +3,7 @@
 #
 # Alex Heinrich
 # Circuit Analyzer
+# Might be broken; awaiting further updates to verify functionality.
 #
 ###########################################################################
 ###########################################################################
