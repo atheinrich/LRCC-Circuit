@@ -3,7 +3,7 @@
 #
 # Alex Heinrich
 # Circuit Analyzer
-# Outputs a CSV file
+# Outputs a CSV file 
 # Differs from Series LRC in the assumption of a real-valued voltage input
 # in the differential equation for electric charge over time. This notably
 # results in time-dependent impedance functions. The resulting behavior is
