@@ -4,7 +4,7 @@
 # Alex Heinrich
 # Circuit Analyzer
 # Outputs a CSV file
-# More details are given in the Probe Circuit script.
+# More details are given in the Probe LRCC script.
 #
 ###########################################################################
 ###########################################################################
