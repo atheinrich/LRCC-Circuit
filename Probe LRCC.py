@@ -14,7 +14,7 @@
 
 # Voltage Supply
 input_voltage, input_impedance = [1, 0], [50, 0] # Units of volts and ohms.
-frequency, frequency_set = 40*(10**6), 40*(10**6) # Units of hertz. Enter the same value for both parameters.
+frequency, frequency_set = 10*(10**6), 10*(10**6) # Units of hertz. Enter the same value for both parameters.
 angular_frequency = 2 * 3.14159265359 * frequency # Units of radians per second.
 frequency_list = [] # List initialization.
 
@@ -27,11 +27,13 @@ inductor_impedance = [0, 0] # Units of ohms. Serves as a placeholder until calcu
 tuning_impedance = [0, 0] # Units of ohms. Serves as a placeholder until calculation.
 coupling_impedance = [0, 0] # Units of ohms. Serves as a placeholder until calculation.
 inductor_list, tuning_list, coupling_list, total_list = [], [], [], [] # List initialization.
+# list = [[Voltage (real), Voltage (imaginary)], [Current (real), Current (imaginary)], [Impedance (real), Impedance (imaginary)], capacitance]"
 
 # Other
 sampling_rate = 100 # Sets the number of datapoints calculated across the specified range.
 fixed_calculation_counter = 0 # Used to correct undesired data duplication.
 total_impedance, total_current = [], []
+tuning_minimum, tuning_maximum, coupling_minimum, coupling_maximum, tuning_gradation, coupling_gradation = 0, 0, 0, 0, 0, 0 # Value initialization.
 print_view = 0 # Used for troubleshooting. Set to 1 to view optional messages.
 
 
@@ -77,6 +79,10 @@ def parallel(z_1, z_2):
     result = divide(numerator, denominator)
     return result
     
+def magnitude(z_1, z_2):
+    result = (z_1**2 + z_2**2)**(1/2)
+    return result
+    
 
 ###########################################################################
 # Functions
@@ -120,7 +126,15 @@ def solve_circuit(total_current, parallel_impedance):
 
 def export_data():
     """ Saves current calculation lists to tab separated values in a text file. """
+    global frequency_list, total_list, inductor_list, tuning_list, coupling_list
     if print_view == 1: print("export_data():\n") # Used for troubleshooting.
+    #print(tuning_list[0])
+    #print(coupling_list[0])
+    #frequency_list.pop(0)
+    #total_list.pop(0)
+    #inductor_list.pop(0)
+    #tuning_list.pop(0)
+    #coupling_list.pop(0)
     with open("=data.txt", 'w', encoding='utf-8') as data_file:
         export_titles = ("Frequency [Hz]\t"
             "Total voltage (real) [V]\t"
@@ -159,21 +173,21 @@ def export_data():
                 f"{total_list[i][1][1]}\t"
                 f"{total_list[i][2][0]}\t"
                 f"{total_list[i][2][1]}\t"
-                f"{inductor_list[i][0][-1]}\t"
+                f"{inductor_list[i][-1]}\t"
                 f"{inductor_list[i][0][0]}\t"
                 f"{inductor_list[i][0][1]}\t"
                 f"{inductor_list[i][1][0]}\t"
                 f"{inductor_list[i][1][1]}\t"
                 f"{inductor_list[i][2][0]}\t"
                 f"{inductor_list[i][2][1]}\t"
-                f"{tuning_list[i][0][-1]}\t"
+                f"{tuning_list[i][-1]}\t"
                 f"{tuning_list[i][0][0]}\t"
                 f"{tuning_list[i][0][1]}\t"
                 f"{tuning_list[i][1][0]}\t"
                 f"{tuning_list[i][1][1]}\t"
                 f"{tuning_list[i][2][0]}\t"
                 f"{tuning_list[i][2][1]}\t"
-                f"{coupling_list[i][0][-1]}\t"
+                f"{coupling_list[i][-1]}\t"
                 f"{coupling_list[i][0][0]}\t"
                 f"{coupling_list[i][0][1]}\t"
                 f"{coupling_list[i][1][0]}\t"
@@ -212,8 +226,10 @@ def update_fixed_values():
     """ Updates a parameter based on user entry. It accepts scientific notation (ex. 6.63e-34). """
     global frequency, sampling_rate, inductance, tuning_capacitance, coupling_capacitance, frequency_set, inductance_set, tuning_capacitance_set, coupling_capacitance_set
     action = int(input("Select a value to change:\n1) Frequency\n2) Sampling rate\n3) Inductance\n4) Inductor resistance\n5) Tuning capacitance\n6) Coupling capacitance\n0) Quit to main menu.\n\n"))
-    print()
-    if action == 1:
+    print("\n")
+    if action == 0:
+        main()
+    elif action == 1:
         frequency = float(input("Enter frequency [Hz]:\t"))
     elif action == 2:
         sampling_rate = int(float(input("Enter sampling rate:\t")))
@@ -239,73 +255,86 @@ def fixed_calculation():
 def cluster_calculation():
     """ Solves the circuit with one parameter as a variable. """
     global tuning_capacitance, coupling_capacitance, frequency
+    reset_variables() # Prepares the program for the next calculation.
+    reset_lists() # Prepares the program for the next calculation.
     action = int(input("Select a variable:\n1) Tuning capacitance.\n2) Coupling capacitance.\n3) Frequency.\n0) Quit to main menu.\n\n"))
     print("\n")
-    if action != 0:
+    if action == 0:
+        main()
+    else:
         print("Enter 0 for each variable to quit to main menu.")
         if action == 1: # Sets the tuning capacitor as a variable.
             minimum = float(input("Enter a minimum value [F]:\t")) # Sets minimum capacitance.
             maximum = float(input("Enter a maximum value [F]:\t")) # Sets maximum capacitance.
+            print("\n")
             if (minimum + maximum) != 0:
                 tuning_capacitance = minimum # Sets the minimum as the first value in the series.
                 gradation = ((maximum - minimum)/sampling_rate) # Sets the number of farads between each value.
-                print(f"Sampling rate:\t\t\t{sampling_rate}\nGradation [F]:\t\t\t{gradation}\n")
+                print(f"Sampling rate:\t\t\t{sampling_rate}\nGradation [F]:\t\t\t{gradation:.2e}\n")
                 for i in range(sampling_rate+1): # Cycles through each value in the chosen interval.
                     fixed_calculation() # Calculates values for the current parameters.
                     tuning_capacitance += gradation # Sets the next parameter.
                 return True
             else:
-                return False
+                print("\n")
+                main()
         if action == 2: # Sets the coupling capacitor as the variable.
             minimum = float(input("Enter a minimum value [F]:\t")) # Sets minimum capacitance.
             maximum = float(input("Enter a maximum value [F]:\t")) # Sets maximum capacitance.
             if (minimum + maximum) != 0:
                 coupling_capacitance = minimum # Sets the minimum as the first value in the series.
                 gradation = ((maximum - minimum)/sampling_rate) # Sets the number of farads between each value.
-                print(f"Sampling rate:\t\t\t{sampling_rate}\nGradation [F]:\t\t\t{gradation}\n")
+                print(f"Sampling rate:\t\t\t{sampling_rate}\nGradation [F]:\t\t\t{gradation:.2e}\n")
                 for i in range(sampling_rate+1): # Cycles through each value in the chosen interval.
                     fixed_calculation() # Calculates values for the current parameters.
                     coupling_capacitance += gradation # Sets the next parameter.
                 return True
             else:
-                return False
+                print("\n")
+                main()
         if action == 3: # Sets the input frequency as the variable.
             minimum = float(input("Enter a minimum value [Hz]:\t")) # Sets minimum frequency.
             maximum = float(input("Enter a maximum value [Hz]:\t")) # Sets maximum frequency.
             if (minimum + maximum) != 0:
                 frequency = minimum # Sets the minimum as the first value in the series.
                 gradation = ((maximum - minimum)/sampling_rate) # Sets the number of hertz between each value.
-                print(f"Sampling rate:\t\t\t{sampling_rate}\nGradation [F]:\t\t\t{gradation}\n")
+                print(f"Sampling rate:\t\t\t{sampling_rate}\nGradation [F]:\t\t\t{gradation:.2e}\n")
                 for i in range(sampling_rate+1): # Cycles through each value in the chosen interval.
                     fixed_calculation() # Calculates values for the current parameters.
                     frequency += gradation # Sets the next parameter.
                 return True
             else:
-                return False
-    else:
-        return False
+                print("\n")
+                main()
 
-def dense_calculation():
+def dense_calculation(force=False):
     """ Solves the circuit with both capacitance values as variables. """
-    global tuning_capacitance, coupling_capacitance
-    print("Enter 0 for each variable to quit to main menu.")
-    tuning_minimum = float(input("Enter a minimum tuning capacitance [F]:\t")) # Sets minimum capacitance.
-    tuning_maximum = float(input("Enter a maximum tuning capacitance [F]:\t")) # Sets maximum capacitance.
-    coupling_minimum = float(input("Enter a minimum coupling capacitance [F]:\t")) # Sets minimum capacitance.
-    coupling_maximum = float(input("Enter a maximum coupling capacitance [F]:\t")) # Sets maximum capacitance.
+    global tuning_capacitance, coupling_capacitance, tuning_minimum, tuning_maximum, coupling_minimum, coupling_maximum, tuning_gradation, coupling_gradation
+    reset_variables() # Prepares the program for the next calculation.
+    reset_lists() # Prepares the program for the next calculation.
+    if force:
+        tuning_minimum, tuning_maximum, coupling_minimum, coupling_maximum = 1e-14, 1e-3, 1e-14, 1e-3
+    else:
+        print("Enter 0 for each variable to quit to main menu.")
+        tuning_minimum = float(input("Enter a minimum tuning capacitance [F]:\t\t")) # Sets minimum capacitance.
+        tuning_maximum = float(input("Enter a maximum tuning capacitance [F]:\t\t")) # Sets maximum capacitance.
+        coupling_minimum = float(input("Enter a minimum coupling capacitance [F]:\t")) # Sets minimum capacitance.
+        coupling_maximum = float(input("Enter a maximum coupling capacitance [F]:\t")) # Sets maximum capacitance.
     print("\n")
     if (tuning_minimum + tuning_maximum + coupling_minimum + coupling_maximum) != 0:
         tuning_capacitance = tuning_minimum # Sets the minimum as the first value in the series.
         coupling_capacitance = coupling_minimum # Sets the minimum as the first value in the series.
         tuning_gradation = (tuning_maximum - tuning_minimum)/sampling_rate # Sets the number of farads between each value.
         coupling_gradation = (coupling_maximum - coupling_minimum)/sampling_rate # Sets the number of farads between each value.
-        print(f"Sampling rate:\t\t\t{sampling_rate}\nTuning gradation [F]:\t\t{tuning_gradation}\nCoupling gradation [F]:\t\t{coupling_gradation}\n")
+        print(f"Sampling rate:\t\t\t{sampling_rate}\nTuning gradation [F]:\t\t{tuning_gradation:.2e}\nCoupling gradation [F]:\t\t{coupling_gradation:.2e}\n")
         for i in range(sampling_rate+1): # Cycles through tuning parameters.
             for i in range(sampling_rate+1): # Cycles through coupling parameters.
                 fixed_calculation() # Calculates values for the current parameters.
                 coupling_capacitance += coupling_gradation # Sets the next parameter.
             coupling_capacitance = coupling_minimum # Sets the minimum as the first value in the series.
             tuning_capacitance += tuning_gradation # Sets the next parameter.
+    else:
+        main()
 
 def complex_algebra():
     """ Computes binary operations on complex numbers. """
@@ -331,6 +360,47 @@ def complex_algebra():
             if operation == 5:
                 result = parallel(z_1, z_2)
             print(f"Result:\t({result[0]})+i({result[1]})\n\n")
+        else:
+            main()
+    else:
+        main()
+
+def brute_force():
+    global sampling_rate
+    action = int(input("Warning! This function makes millions of computations and may take some time.\n1) Confirm.\n0) Exit.\n\n"))
+    print("\n")
+    if action == 1:
+        sampling_rate = 3000
+        dense_calculation(True)
+    else:
+        main()
+
+def information():
+    print("Circuit diagram:\n")
+    print(".................................................................................\n"
+        "....................|  |.........................................................\n"
+        "....................|  |.........................................................\n"
+        "...OOOOOOOOOOOOOOOOO|  |OOOOOOOOOOOOOOOOOOO......................................\n"
+        "...OO...............|  |.................OO......................................\n"
+        "...OO...............|  |.................OO......................................\n"
+        "...//....................................OO............../\\..../\\................\n"
+        "...\\\\.......COUPLING CAPACITOR...........OOOOOOOOOOOO\\\\///\\\\\\///\\\\OOOOOOOOOOOO...\n"
+        "....\\\\...................................OO...........\\/....\\/..............OO...\n"
+        "....//..INPUT IMPEDANCE..................OO...............................((())).\n"
+        "...//................................----------.....WIRE RESISTANCE........(())..\n"
+        "...\\\\..............TUNING CAPACITOR..          ...........................((())).\n"
+        "...OO................................----------............................(())..\n"
+        "...OO....................................OO.....................INDUCTOR..((())).\n"
+        ".[ ~~ ]..................................OO.................................OO...\n"
+        ".[ ~~ ]..AC INPUT/OUTPUT.................OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO...\n"
+        ".[ ~~ ]..................................OO......................................\n"
+        "...OO....................................OO......................................\n"
+        "...OO....................................OO......................................\n"
+        "...OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO......................................\n"
+        ".................................................................................\n"
+        ".......................................PROBE CIRCUIT.............................\n"
+        ".................................................................................\n\n")
+    main()
 
 def reset_variables():
     """ Reverts to the default values, rather than the last values calculated. Used in main(). """
@@ -351,42 +421,180 @@ def reset_lists():
     total_current.clear()
     fixed_calculation_counter = 0
 
+def maximum_inductance_voltage(index):
+    inductor_voltage_list, loop_kill, tip_counter = [], 0, 0
+    for i in range(len(inductor_list)):
+        mag = magnitude(inductor_list[i][1][0],inductor_list[i][1][1])
+        inductor_voltage_list.append(mag)
+    maximum_voltage = max(inductor_voltage_list)
+    if index == 0:
+        for i in range(len(inductor_voltage_list)):
+            if (inductor_voltage_list[i] == maximum_voltage) and (loop_kill == 0):
+                loop_kill = 1
+                print(f"Maximum inductor voltage [V]:\t{maximum_voltage:.2e}\n"
+                        f"Frequency [Hz]:\t\t\t{frequency_list[i]:.2e}\n"
+                        f"Tuning capacitance [F]:\t\t{tuning_list[i][-1]:.2e}\n"
+                        f"Coupling capacitance [F]:\t{coupling_list[i][-1]:.2e}\n")
+                if (tuning_minimum-tuning_gradation) <= tuning_list[i][-1] <= (tuning_minimum+tuning_gradation):
+                    print("!! Try a lower tuning capacitance. !!")
+                    tip_counter += 1
+                if (tuning_maximum-tuning_gradation) <= tuning_list[i][-1] <= (tuning_maximum+tuning_gradation):
+                    print("!! Try a lower tuning capacitance. !!")
+                    tip_counter += 1
+                if (coupling_minimum-tuning_gradation) <= coupling_list[i][-1] <= (coupling_minimum+tuning_gradation):
+                    print("!! Try a lower coupling capacitance. !!")
+                    tip_counter += 1
+                if (coupling_maximum-tuning_gradation) <= coupling_list[i][-1] <= (coupling_maximum+tuning_gradation):
+                    print("!! Try a higher coupling capacitance. !!")
+                    tip_counter += 1
+                if tip_counter == 2:
+                    print("!! Try increasing the sampling rate or changing the range of values. !!")
+    elif index == 1:
+        return inductor_voltage_list
+
+def plot_data():
+    action_1 = int(input("Select a variable for the x-axis:\n1) Tuning capacitance.\n2) Coupling capacitance.\n3) Inductor voltage magnitude.\n4) Frequency.\n0) Quit to main menu.\n\n"))
+    print("\n")
+    action_2 = 0
+    if action_1 == 0:
+        main()
+    action_2 = int(input("Select a variable for the y-axis:\n1) Tuning capacitance.\n2) Coupling capacitance.\n3) Inductor voltage magnitude.\n4) Frequency.\n0) Quit to main menu.\n\n"))
+    print("\n")
+    if action_2 == 0:
+        main()
+    action_3 = int(input("Select a variable for the z-axis:\n1) Tuning capacitance.\n2) Coupling capacitance.\n3) Inductor voltage magnitude.\n4) Frequency.\n0) No z-axis.\n\n"))
+    print("\n")
+    import matplotlib.pyplot as plt
+    import matplotlib.axes as axes
+    from math import log
+    list_1, list_1_name, list_2, list_2_name, list_3, list_3_name = [], 0, [], 0, [], 0
+    if action_1 == 1:
+        list_1_name = "Tuning capacitance [F]"
+        for i in range(len(tuning_list)):
+            list_1.append(tuning_list[i][-1])
+    elif action_1 == 2:
+        list_1_name = "Coupling capacitance [F]"
+        for i in range(len(tuning_list)):
+            list_1.append(coupling_list[i][-1])
+    elif action_1 == 3:
+        list_1_name = "Inductor voltage magnitude [V]"
+        list_1 = maximum_inductance_voltage(1)
+    elif action_1 == 4:
+        list_1_name = "Frequency [Hz]"
+        for i in range(len(frequency_list)):
+            list_1.append(frequency_list[i])
+    if action_2 == 1:
+        list_2_name = "Tuning capacitance [F]"
+        for i in range(len(tuning_list)):
+            list_2.append(tuning_list[i][-1])
+    elif action_2 == 2:
+        list_2_name = "Coupling capacitance [F]"
+        for i in range(len(tuning_list)):
+            list_2.append(coupling_list[i][-1])
+    elif action_2 == 3:
+        list_2_name = "Inductor voltage [V]"
+        list_2 = maximum_inductance_voltage(1)
+    elif action_2 == 4:
+        list_2_name = "Frequency [Hz]"
+        for i in range(len(frequency_list)):
+            list_2.append(frequency_list[i])
+    if action_3 == 1:
+        list_3_name = "Tuning capacitance [F]"
+        for i in range(len(tuning_list)):
+            list_3.append(tuning_list[i][-1])
+    elif action_3 == 2:
+        list_3_name = "Coupling capacitance [F]"
+        for i in range(len(tuning_list)):
+            list_3.append(coupling_list[i][-1])
+    elif action_3 == 3:
+        list_3_name = "Inductor voltage [V]"
+        list_3 = maximum_inductance_voltage(1)
+    elif action_3 == 4:
+        list_3_name = "Frequency [Hz]"
+        for i in range(len(frequency_list)):
+            list_3.append(frequency_list[i])
+    if action_3 == 0:
+        list_of_tuples = list(zip(list_1, list_2))
+        list_of_tuples = [(x, y) for x, y in list_of_tuples]
+        plt.scatter(*zip(*list_of_tuples)) # [(x_1, x_2, ...), (y_1, y_2, ...)]
+        plt.xlabel(list_1_name)
+        plt.ylabel(list_2_name)
+    else:
+        from matplotlib import cm
+        import numpy as np
+        #list_of_tuples = list(zip(list_1, list_2, list_3)) # Old method.
+        #list_of_tuples = [(x, y, z) for x, y, z in list_of_tuples] # Old method.
+        #fig = plt.figure() # Old method.
+        #ax = fig.add_subplot(projection='3d') # Old method.
+        #ax.scatter(*zip(*list_of_tuples)) # Old method.
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        list_1 = np.array(list_1)
+        list_2 = np.array(list_2)
+        list_3 = np.array(list_3)
+        surf = ax.plot_trisurf(list_1, list_2, list_3, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+        ax.xaxis._axinfo['label']['space_factor'] = 2.8
+        fig.colorbar(surf, shrink=0.5, aspect=5, location='left')
+        ax.set_xlabel(list_1_name)
+        ax.set_ylabel(list_2_name)
+        ax.set_zlabel(list_3_name)
+    plt.show()
+
 def main():
     fixed_calculation() # Solves the circuit for the default or updated parameters.
-    try: action_1 = int(input("Enter an action:\n1) View fixed values.\n2) Change a value.\n3) Run calculations.\n0) Quit.\n\n"))
+    try: action_1 = int(input("Enter an action:\n1) View fixed values.\n2) Change a value.\n3) Run calculations.\n4) Help.\n0) Quit.\n\n"))
     except: action_1 = 0
     print("\n")
     if action_1 == 0:
         print("##################################################################################")
         print("Farewell!")
         print("##################################################################################\n\n")
-        pass
+        quit()
     else:
         if action_1 == 1:
             print_values() # Prints parameters and calculations within the program.
         elif action_1 == 2:
             update_fixed_values() # Allows the user to change a parameter.
         elif action_1 == 3:
-            action_2 = int(input("Select calculation:\n1) Fixed calculation (no variables).\n2) Cluster calculation (one variable).\n3) Dense calculation (two variables).\n4) Complex algebra (four variables).\n0) Quit to main menu.\n\n"))
+            action_2 = int(input("Select calculation:\n1) Fixed calculation (no variables).\n2) Cluster calculation (one variable).\n3) Dense calculation (two capacitors).\n4) Brute force (two capacitors).\n5) Complex algebra (four variables).\n0) Quit to main menu.\n\n"))
             print("\n")
             if action_2 != 0:
-                if action_2 == 1:
-                    reset_lists()
-                    fixed_calculation() # Solves the circuit for one set of parameters.
-                    print("Data exported successfully.\n\n")
-                elif action_2 == 2:
-                    reset_lists()
-                    operation = cluster_calculation() # Solves the circuit for one variable.
-                    if operation:
-                        print("Data exported successfully.\n\n")
-                elif action_2 == 3:
-                    dense_calculation() # Solves the circuit for two variables.
-                    print("Data exported successfully.\n\n")
-                elif action_2 == 4:
+                if action_2 == 5:
                     complex_algebra() # Operates on complex numbers.
-                export_data() # Exports the resulting data to a text file.
-        reset_variables() # Prepares the program for the next calculation.
-        reset_lists() # Prepares the program for the next calculation.
+                else:
+                    operation = 1
+                    if action_2 == 1:
+                        reset_lists()
+                        fixed_calculation() # Solves the circuit for one set of parameters.
+                    elif action_2 == 2:
+                        reset_lists()
+                        operation = cluster_calculation() # Solves the circuit for one variable.
+                        operation = 1
+                    elif action_2 == 3:
+                        dense_calculation() # Solves the circuit for two variables.
+                    elif action_2 == 4:
+                        brute_force() # Calls dense_calculation with an exceedingly large sample_rate and range of capacitance values.
+                    if operation:
+                        maximum_inductance_voltage(0)
+                        if action_2 != 4:
+                            export_data() # Exports the resulting data to a text file.
+                            action_3 = int(input("\nData exported successfully. Do you want to plot data?\n1) Yes.\n0) No.\n\n"))
+                        else:
+                            action_3 = int(input("\nDo you want to plot data?\n1) Yes.\n0) No.\n\n"))
+                        print("\n")
+                        if action_3 == 1:
+                            plot_data()
+                        while action_3 != 0:
+                            action_3 = int(input("Do you want to plot more data?\n1) Yes.\n0) No.\n\n"))
+                            print("\n")
+                            if action_3 == 1:
+                                plot_data()
+                print("Please wait while lists reset.\n\n")
+                reset_variables() # Prepares the program for the next calculation.
+                reset_lists() # Prepares the program for the next calculation.
+            else:
+                main()
+        elif action_1 == 4:
+            information()
         main()
 
 ###########################################################################
