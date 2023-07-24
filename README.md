@@ -4,11 +4,11 @@ Numerical simulation of LRC circuits for frequency tuning and impedance matching
 The primary purpose of these programs are for the construction of probe circuits for magnetic resonance experiments, such as spin exchange optical pumping (SEOP). These circuits collect and transmit alternating current signals at a desired frequency. This frequency depends on the values of the inductors, resistors, and capacitors used. Furthermore, its implementation in an extended signal flow requires adequate impedance matching to promote signal quality. Each program allows these factors to be adjusted numerically and monitored as a function of up to two simultaneous variables.
 
 # Circuit Diagrams
-The probe circuit itself is given by the Probe_LRCC script, while the Series_LRC and Parallel_LRC scripts are prototypical derivatives of the probe circuit. Resistors are represented by boxes, inductors are represented by four loops, capacitors are represented by parallel lines of equal length, and voltage sources are represented by parallel lines of unequal length.
--  Series_LRC is identified by (a) in Circuit_Diagrams. It models an inductor, resistor, and capacitor in series. It may or may not function as intended.
--  Parallel_LRC is identified by (b) in Circuit_Diagrams. It models an inductor and resistor in parallel with a capacitor. It may or may not function as intended.
--  Probe_LRCC is identified by (c) in Circuit_Diagrams. It is the main focus of this project and models the probe circuit constructed for tuning and matching.
--  SEOP is identified by (d) in Circuit_Diagrams. It attempts to model SEOP as a simple circuit (https://doi.org/10.1103/PhysRevA.29.3092), though it has not been developed or tested adequately.
+The probe circuit itself is given by the LRCC_Probe script, while the LRC_Series and LRC_Parallel scripts are prototypical derivatives of the probe circuit. Resistors are represented by boxes, inductors are represented by four loops, capacitors are represented by parallel lines of equal length, and voltage sources are represented by parallel lines of unequal length.
+-  LRC_Series is identified by (a) in Circuit_Diagrams. It models an inductor, resistor, and capacitor in series. It may or may not function as intended.
+-  LRC_Parallel is identified by (b) in Circuit_Diagrams. It models an inductor and resistor in parallel with a capacitor. It may or may not function as intended.
+-  LRCC_Probe is identified by (c) in Circuit_Diagrams. It is the main focus of this project and models the probe circuit constructed for tuning and matching.
+-  LRC_SEOP is identified by (d) in Circuit_Diagrams. It attempts to model SEOP as a simple circuit (https://doi.org/10.1103/PhysRevA.29.3092), though it has not been developed or tested adequately.
 
 # Possible Uses
 Steps to maximize power across the inductive coil:
