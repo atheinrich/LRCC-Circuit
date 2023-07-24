@@ -8,7 +8,7 @@ The probe circuit itself is given by the Probe_LRCC script, while the Series_LRC
 -  Series_LRC is identified by (a) in Circuit_Diagrams. It models an inductor, resistor, and capacitor in series. It may or may not function as intended.
 -  Parallel_LRC is identified by (b) in Circuit_Diagrams. It models an inductor and resistor in parallel with a capacitor. It may or may not function as intended.
 -  Probe_LRCC is identified by (c) in Circuit_Diagrams. It is the main focus of this project and models the probe circuit constructed for tuning and matching.
--  SEOP is identified by (d) in Circuit_Diagrams. It attempts to model SEOP as a simple circuit, though it has not been developed or tested adequately.
+-  SEOP is identified by (d) in Circuit_Diagrams. It attempts to model SEOP as a simple circuit (https://doi.org/10.1103/PhysRevA.29.3092), though it has not been developed or tested adequately.
 
 # Possible Uses
 Steps to maximize power across the inductive coil:
