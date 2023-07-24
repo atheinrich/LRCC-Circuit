@@ -18,6 +18,7 @@ Steps to maximize power across the inductive coil:
 4. Vary the coupling (matching) capacitance to a point at which the total reactance equals the input reactance.
 5. Update the coupling capacitance to the respective value, then verify the circuit's behavior by varying the frequency over the range of interest.
 
+# Theory
 An additional interest in this toolset is the comparison of real and complex analysis in terms of impedance calculations and Ohmic equations. For a series LRC circuit, the following differential equation may be constructed to represent the total change in electric charge over time: \
         $L\ddot{q}+R\dot{q}+C^{-1}q=\Lambda_\textrm{in}(\omega,t)$. \
 Here, $L$ is inductance, $q$ is electric charge, $R$ is resistance, $C$ is capacitance, $\Lambda$ is input voltage, and $\omega$ is angular frequency. An important quantity that may be extracted from this relation is impedance: \
